@@ -1,5 +1,7 @@
 import _objectSpread from '@babel/runtime/helpers/esm/objectSpread2';
 
+
+/*================================工具函数start===================================== */
 /**
  * Adapted from React: https://github.com/facebook/react/blob/master/packages/shared/formatProdErrorMessage.js
  *
@@ -108,6 +110,8 @@ function kindOf(val) {
   return typeOfVal;
 }
 
+/*================================工具函数end===================================== */
+
 /**
  * Creates a Redux store that holds the state tree.
  * The only way to change the data in the store is to call `dispatch()` on it.
@@ -133,7 +137,13 @@ function kindOf(val) {
  * @returns {Store} A Redux store that lets you read the state, dispatch actions
  * and subscribe to changes.
  */
-
+/**
+ * 生产state的构造函数
+ * @param {Funtion} reducer 返回下一个state的函数
+ * @param {any} preloadedState 初始化state数据
+ * @param {Function} enhancer store增强函数
+ * @returns {Store}
+ */
 function createStore(reducer, preloadedState, enhancer) {
   var _ref2;
 
@@ -162,8 +172,10 @@ function createStore(reducer, preloadedState, enhancer) {
   var currentReducer = reducer;
   // 默认的初始数据
   var currentState = preloadedState;
+  //监听器
   var currentListeners = [];
   var nextListeners = currentListeners;
+  // 是否正在派发state的标志位（为true时不能获取state状态）
   var isDispatching = false;
   /**
    * This makes a shallow copy of currentListeners so we can use
@@ -173,6 +185,7 @@ function createStore(reducer, preloadedState, enhancer) {
    * subscribe/unsubscribe in the middle of a dispatch.
    */
 
+  // 避免使用nextListeners时会报错
   function ensureCanMutateNextListeners() {
     if (nextListeners === currentListeners) {
       nextListeners = currentListeners.slice();
@@ -216,7 +229,11 @@ function createStore(reducer, preloadedState, enhancer) {
    * @returns {Function} A function to remove this change listener.
    */
 
-
+  /**
+   * 订阅者：store变化时会依次执行订阅的函数
+   * @param {Function} listener dispatch时会调用的函数
+   * @returns {Function} 删除该监听者的函数
+   */
   function subscribe(listener) {
     if (typeof listener !== 'function') {
       throw new Error(process.env.NODE_ENV === "production" ? formatProdErrorMessage(4) : "Expected the listener to be a function. Instead, received: '" + kindOf(listener) + "'");
@@ -239,9 +256,11 @@ function createStore(reducer, preloadedState, enhancer) {
       }
 
       isSubscribed = false;
+      // 调用该方法会将currentListeners浅复制给nextListeners
       ensureCanMutateNextListeners();
       var index = nextListeners.indexOf(listener);
       nextListeners.splice(index, 1);
+      // 将currentListeners数组值为空，防止内存泄漏
       currentListeners = null;
     };
   }
@@ -273,8 +292,8 @@ function createStore(reducer, preloadedState, enhancer) {
 
   /**
    * 派发事件函数
-   * @param {} action 
-   * @returns 
+   * @param {Object} action 派发的事件。必须是一个对象
+   * @returns {Object}
    */
   function dispatch(action) {
     if (!isPlainObject(action)) {
@@ -301,6 +320,7 @@ function createStore(reducer, preloadedState, enhancer) {
 
     var listeners = currentListeners = nextListeners;
 
+    // 依次调用收集监听的函数 （对应UI的渲染）
     for (var i = 0; i < listeners.length; i++) {
       var listener = listeners[i];
       listener();
